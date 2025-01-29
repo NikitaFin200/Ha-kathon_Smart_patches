@@ -13,7 +13,7 @@ def load_code_from_markdown(filepath: str):
     match = match_pattern.search(content)
     patch = patch_pattern.search(content)
 
-    # Извлечение и очистка текста
+    # Извлечение и очистка текста ffff
     match_text = match.group(1).strip() if match else None
     patch_text = patch.group(1).strip() if patch else None
 
