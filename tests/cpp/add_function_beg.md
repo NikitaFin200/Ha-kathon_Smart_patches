@@ -5,9 +5,7 @@
 
 ```
 
-void A::func() {
-  std::cout << "Yeah, baby!";
-}
+print(fun1(a,b))
 
 ```
 
@@ -15,8 +13,7 @@ void A::func() {
 ### match:
 ```
 ...
-void A::func(...) {
-  >>>
+print( ... >>> )
   ...
 ```
 
