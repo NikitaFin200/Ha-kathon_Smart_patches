@@ -166,4 +166,3 @@ class CodePatcherApp(tk.Tk):
 if __name__ == "__main__":
     app = CodePatcherApp()
     app.mainloop()
-Ы
