@@ -1,5 +1,3 @@
-from tabnanny import Whitespace
-
 import re
 from pygments import lex
 from pygments.lexers import get_lexer_by_name
@@ -18,22 +16,8 @@ def load_code_from_markdown(filepath: str):
     patch = patch_pattern.search(content)
     # Извлечение и очистка текста ffff
     match_text = match.group(1).strip() if match else None
-   # match_text = match_text.replace("\n","")
     patch_text = patch.group(1).strip() if patch else None
     return match_text, patch_text
-
-
-def parse_match_string(match_text: str):
-    # Регулярное выражение для поиска операторов (..., <<<, >>>) и их аргументов
-    pattern = re.compile(r'(\.{3}|<<<|>>>)(.*?)(?=(\.{3}|<<<|>>>|$))', re.DOTALL)
-
-    # Найти все совпадения
-    tokens = pattern.findall(match_text)
-
-    # Преобразовать результат в список кортежей
-    parsed_result = [(op, arg) for op, arg, _ in tokens]
-
-    return parsed_result
 
 def tokenize_code(code, language):
     try:
@@ -64,13 +48,8 @@ def source_to_tokenList(file_path, func, extra_param):
     result_list = []
     with open(file_path, 'r', encoding='utf-8') as file:
         for line in file:
-            if re.fullmatch(r'\s*', line):
-                continue
             processed_string = remove_insignificant_tokens(func(line, extra_param), extra_param)
-            if processed_string == [(Token.Text, '    ')]:
-                continue
-            else:
-                result_list.append(processed_string)
+            result_list.append(processed_string)
 
     return result_list
 
@@ -79,9 +58,6 @@ def remove_insignificant_tokens(token_list, language):
     is_leading = True  # Флаг для отслеживания начала строки
 
     for token_type, token_value in token_list:
-        # Всегда пропускаем комментарии
-        if is_token_subtype(token_type, Token.Comment):
-            continue
         if is_token_subtype(token_type, Token.Text.Whitespace) and token_value == '\n':
             continue        # Обработка для Python
         if language.lower() == 'python':
@@ -97,8 +73,7 @@ def remove_insignificant_tokens(token_list, language):
 
         # Обработка для остальных языков
         else:
-            if not is_token_subtype(token_type, Token.Text):
-                filtered.append((token_type, token_value))
+            filtered.append((token_type, token_value))
 
     return filtered
 def remove_in_tok_match(filepath, language):
@@ -123,35 +98,107 @@ def group_tokens(tokens):
     for token in tokens:
         token_type, token_value = token
 
-        # Проверяем, является ли токен оператором (например, '...', '>>>', '<<<')
         if is_token_subtype(token_type, Token.Operator) and token_value in ['...', '>>>', '<<<']:
-            print(token_type)
-            # Если есть текущая группа, добавляем ее в результат
-            if current_group:
+            if current_group or current_operator is not None:
                 result.append((current_operator, current_group))
-                current_group = []  # Очистить текущую группу
-
-            # Устанавливаем текущий оператор
+                current_group = []
             current_operator = token_value
         else:
-            # Добавляем токен в текущую группу
             current_group.append(token)
 
-    # Добавляем последнюю группу
-    if current_group:
+    # Добавляем последнюю группу, если есть оператор или группа токенов
+    if current_operator is not None or current_group:
         result.append((current_operator, current_group))
 
     return result
-def ser
-filepath = "add_function_end.md"
-file_path = "expressions.py"
+
+
+def compute_lps(pattern):
+    """Создает префиксный массив для подсписка (Longest Prefix Suffix)."""
+    lps = [0] * len(pattern)
+    length = 0  # Длина предыдущего наибольшего префикса-суффикса
+    i = 1
+
+    while i < len(pattern):
+        if pattern[i] == pattern[length]:
+            length += 1
+            lps[i] = length
+            i += 1
+        else:
+            if length != 0:
+                length = lps[length - 1]
+            else:
+                lps[i] = 0
+                i += 1
+    return lps
+
+
+def compute_lps(pattern):
+    """Создает префиксный массив для подсписка (Longest Prefix Suffix)."""
+    lps = [0] * len(pattern)
+    length = 0  # Длина предыдущего наибольшего префикса-суффикса
+    i = 1
+
+    while i < len(pattern):
+        if pattern[i] == pattern[length]:
+            length += 1
+            lps[i] = length
+            i += 1
+        else:
+            if length != 0:
+                length = lps[length - 1]
+            else:
+                lps[i] = 0
+                i += 1
+    return lps
+
+
+def kmp_search_2d(text, pattern):
+    """Ищет все вхождения подсписка pattern в 2D списке text."""
+    if not pattern:
+        return []
+
+    lps = compute_lps(pattern)
+    result = []
+    i = j = 0  # i - индекс в text, j - в pattern
+
+    # Преобразуем 2D список в 1D список для удобства поиска
+    flat_text = []
+    index_map = []  # Для хранения соответствия индексов [i, j]
+
+    for row_idx, row in enumerate(text):
+        for col_idx, value in enumerate(row):
+            flat_text.append(value)
+            index_map.append((row_idx, col_idx))
+
+    # Поиск с использованием KMP
+    while i < len(flat_text):
+        if flat_text[i] == pattern[j]:
+            i += 1
+            j += 1
+            if j == len(pattern):
+                # Найдено вхождение
+                start_idx = i - j
+                # Получаем начальные индексы [i, j] для первого элемента pattern
+                row_idx, col_idx = index_map[start_idx]
+                result.append([row_idx, col_idx])
+                j = lps[j - 1]
+        else:
+            if j != 0:
+                j = lps[j - 1]
+            else:
+                i += 1
+    return result
+
+filepath = "../tests/py/py_add_end.md"
+file_path = "../source/hatch/expressions.py"
 match, patch = load_code_from_markdown(filepath)
-parsed_output = parse_match_string(match)
-tr = transform_tuples(parsed_output, tokenize_code, "cpp")
 tr3 = source_to_tokenList(file_path, tokenize_code, "python")
 tr4 =  remove_in_tok_match(filepath, "python")
+
 print(tr4)
 # print(parsed_output)
 # print("Match:", tr)
 # print("Patch:", patch)
 print("Sourse:",  tr3)
+print(kmp_search_2d(tr3, tr4[0][1]))
