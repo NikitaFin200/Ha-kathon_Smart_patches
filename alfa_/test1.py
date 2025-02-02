@@ -133,28 +133,8 @@ def compute_lps(pattern):
     return lps
 
 
-def compute_lps(pattern):
-    """Создает префиксный массив для подсписка (Longest Prefix Suffix)."""
-    lps = [0] * len(pattern)
-    length = 0  # Длина предыдущего наибольшего префикса-суффикса
-    i = 1
-
-    while i < len(pattern):
-        if pattern[i] == pattern[length]:
-            length += 1
-            lps[i] = length
-            i += 1
-        else:
-            if length != 0:
-                length = lps[length - 1]
-            else:
-                lps[i] = 0
-                i += 1
-    return lps
-
-
 def kmp_search_2d(text, pattern):
-    """Ищет все вхождения подсписка pattern в 2D списке text."""
+    """Ищет все вхождения подсписка pattern в 2D списке text и возвращает начало и конец вхождения."""
     if not pattern:
         return []
 
@@ -178,10 +158,15 @@ def kmp_search_2d(text, pattern):
             j += 1
             if j == len(pattern):
                 # Найдено вхождение
-                start_idx = i - j
-                # Получаем начальные индексы [i, j] для первого элемента pattern
-                row_idx, col_idx = index_map[start_idx]
-                result.append([row_idx, col_idx])
+                start_idx = i - j  # Начальный индекс вхождения
+                end_idx = i - 1  # Конечный индекс вхождения
+
+                # Получаем начальные и конечные индексы [i, j]
+                start_row, start_col = index_map[start_idx]
+                end_row, end_col = index_map[end_idx]
+
+                # Добавляем результат в формате [начало, конец]
+                result.append(((start_row, start_col), (end_row, end_col)))
                 j = lps[j - 1]
         else:
             if j != 0:
@@ -190,15 +175,36 @@ def kmp_search_2d(text, pattern):
                 i += 1
     return result
 
+def search_from_sourse (match, sourse):
+    add_index = []
+    for i in range(len(match)):
+        if match[i][0] == '...':
+            index_pattern = kmp_search_2d(sourse, match[i][1])
+            if index_pattern:
+                if len(index_pattern) > 1:
+                    continue
+                if  match[i+1][0] == '>>>':
+                    index_pattern_add = kmp_search_2d(sourse, match[i+1][1])
+                    if index_pattern_add:
+                        if len(index_pattern_add) > 1:
+                            continue
+                    add_index.append(index_pattern)
+            else:
+                print("ошибка")
+                return 0
+    return add_index
+
+
+
 filepath = "../tests/py/py_add_end.md"
 file_path = "../source/hatch/expressions.py"
 match, patch = load_code_from_markdown(filepath)
 tr3 = source_to_tokenList(file_path, tokenize_code, "python")
 tr4 =  remove_in_tok_match(filepath, "python")
-
+a = search_from_sourse (tr4, tr3)
 print(tr4)
 # print(parsed_output)
 # print("Match:", tr)
 # print("Patch:", patch)
 print("Sourse:",  tr3)
-print(kmp_search_2d(tr3, tr4[0][1]))
+print(a)

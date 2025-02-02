@@ -1,7 +1,7 @@
 import re
 
 def load_code_from_markdown(filepath: str):
-    with open(filepath, 'r', encoding='utf-8') as file:
+with open(filepath, 'r', encoding='utf-8') as file:
         content = file.read()
 
     # Регулярное выражение для поиска блока match

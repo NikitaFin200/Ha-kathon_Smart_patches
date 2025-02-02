@@ -15,9 +15,8 @@ class A:
 ### match:
 ```
 ...
-def func(self):
-  ...
-  >>>
+with open(filepath, 'r', encoding='utf-8') as file:
+>>>
 ```
 
 ### patch
